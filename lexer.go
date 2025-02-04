@@ -1,24 +1,27 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
-	"fmt"
 	"io"
+	"iter"
 	"log/slog"
+	"time"
 	"unicode"
 )
 
 type lexer struct {
-	reader *bytes.Reader
+	reader *bufio.Reader
 }
 
-func newLexer(input []byte) *lexer {
+func newLexer(rd io.Reader) *lexer {
 	return &lexer{
-		reader: bytes.NewReader(input),
+		reader: bufio.NewReader(rd),
 	}
 }
 
 func (l *lexer) nextToken() parsedToken {
+	time.Sleep(time.Second / 4)
 	ch, err := l.reader.ReadByte()
 	if err != nil {
 		return tokenEOF
@@ -46,7 +49,6 @@ func (l *lexer) nextToken() parsedToken {
 	case ')':
 		token = TokenRParen
 	case 'f', 'n', 't':
-		fmt.Println("found ident")
 		token = TokenIdent
 	case '"':
 		token = TokenDoubleQuote
@@ -64,13 +66,23 @@ func (l *lexer) nextToken() parsedToken {
 	case TokenDoubleQuote:
 		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
 	case TokenIdent:
-		l.reader.Seek(-1, io.SeekCurrent)
+		l.reader.UnreadByte()
 		return l.getIdentTokenType().NewParsedToken()
 	case TokenNumber:
-		l.reader.Seek(-1, io.SeekCurrent)
+		l.reader.UnreadByte()
 		return TokenNumber.NewParsedTokenFromBytes(l.readNumber())
 	default:
 		return token.NewParsedToken()
+	}
+}
+
+func (l *lexer) tokens() iter.Seq[parsedToken] {
+	return func(yield func(parsedToken) bool) {
+		for {
+			if token := l.nextToken(); token == tokenEOF || !yield(token) {
+				return
+			}
+		}
 	}
 }
 
@@ -83,7 +95,7 @@ func (l *lexer) readSingleQuoteString() []byte {
 }
 
 func keepReadingDoubleQuoteString(b byte) bool { return b != '"' }
-func keepReadingIdent(b byte) bool             { return isAlpha(b) || !isWhiteSpace(b) }
+func keepReadingIdent(b byte) bool             { return isAlpha(b) && !isWhiteSpace(b) }
 func keepReadingSingleQuoteString(b byte) bool { return b != '\'' }
 
 func (l *lexer) readNumber() []byte {
@@ -112,7 +124,6 @@ func (l *lexer) readValue(continueFunc func(byte) bool) []byte {
 
 func (l *lexer) getIdentTokenType() tokenType {
 	val := string(l.readValue(keepReadingIdent))
-	fmt.Println("read ident value as", string(val))
 
 	if val == "null" {
 		return TokenNull

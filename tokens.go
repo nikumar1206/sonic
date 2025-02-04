@@ -92,7 +92,7 @@ func (twl *tokenWVal) getVal() []byte {
 }
 
 func (twl *tokenWVal) String() string {
-	return fmt.Sprintf("Token Type: %s Token Value: %s", twl.t, string(twl.v))
+	return fmt.Sprintf("%s (%s)", string(twl.v), twl.t)
 }
 
 // NewParsedToken returns a parsedToken from
@@ -159,6 +159,8 @@ func (t tokenType) String() string {
 		return "ILLEGAL"
 	case TOKENEOF:
 		return "EOF"
+	case TokenNull:
+		return "null"
 	default:
 		return fmt.Sprintf("UnknownToken(%d)", t)
 	}

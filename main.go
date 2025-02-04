@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 )
 
 func main() {
@@ -17,16 +18,11 @@ func main() {
 			"key5": "value5"
 		}
 	}`)
-
-	lexer := newLexer(inputString)
+	rd := strings.NewReader(string(inputString))
+	lexer := newLexer(rd)
 
 	slog.SetLogLoggerLevel(slog.LevelDebug)
-	for {
-		t := lexer.nextToken()
-		fmt.Println("out token", t)
-		if t == tokenEOF {
-			fmt.Println("end of json stream")
-			break
-		}
+	for token := range lexer.tokens() {
+		fmt.Println("yielded", token)
 	}
 }
