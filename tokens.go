@@ -14,9 +14,9 @@ const (
 	TokenString
 	// TokenComma is the token type for a comma.
 	TokenComma
-	TokenLParen
-	// TokenRParen is the token type for a right parenthesis.
-	TokenRParen
+	TokenLBracket
+	// TokenRBracket is the token type for a right bracket.
+	TokenRBracket
 	// TokenLBrace is the token type for a left brace.
 	TokenIdent // reserved for true, false, null
 	// TokenColon is the token type for a colon.
@@ -40,8 +40,8 @@ const (
 // maybe lazy init? but thats limited benefit for more complexity
 var (
 	tokenComma       = &tokenWOVal{t: TokenComma}
-	tokenLParen      = &tokenWOVal{t: TokenLParen}
-	tokenRParen      = &tokenWOVal{t: TokenRParen}
+	tokenLBracket    = &tokenWOVal{t: TokenLBracket}
+	tokenRBracket    = &tokenWOVal{t: TokenRBracket}
 	tokenColon       = &tokenWOVal{t: TokenColon}
 	tokenLBrace      = &tokenWOVal{t: TokenLBrace}
 	tokenRBrace      = &tokenWOVal{t: TokenRBrace}
@@ -58,6 +58,8 @@ type parsedToken interface {
 	getType() tokenType
 	getVal() []byte
 	String() string
+	// isOpener() bool
+	// isCloser() bool
 }
 
 // tokenWVal should be used only for numbers
@@ -100,10 +102,10 @@ func (t tokenType) NewParsedToken() parsedToken {
 	switch t {
 	case TokenComma:
 		return tokenComma
-	case TokenLParen:
-		return tokenLParen
-	case TokenRParen:
-		return tokenRParen
+	case TokenLBracket:
+		return tokenLBracket
+	case TokenRBracket:
+		return tokenRBracket
 	case TokenColon:
 		return tokenColon
 	case TokenLBrace:
@@ -141,9 +143,9 @@ func (t tokenType) String() string {
 		return "String"
 	case TokenComma:
 		return "Comma"
-	case TokenLParen:
+	case TokenLBracket:
 		return "("
-	case TokenRParen:
+	case TokenRBracket:
 		return ")"
 	case TokenLBrace:
 		return "{"

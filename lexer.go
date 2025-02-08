@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"iter"
 	"log/slog"
-	"time"
 	"unicode"
 )
 
@@ -21,8 +21,8 @@ func newLexer(rd io.Reader) *lexer {
 }
 
 func (l *lexer) nextToken() parsedToken {
-	time.Sleep(time.Second / 4)
 	ch, err := l.reader.ReadByte()
+	fmt.Println("yielding new token")
 	if err != nil {
 		return tokenEOF
 	}
@@ -44,10 +44,10 @@ func (l *lexer) nextToken() parsedToken {
 		token = TokenColon
 	case ',':
 		token = TokenComma
-	case '(':
-		token = TokenLParen
-	case ')':
-		token = TokenRParen
+	case '[':
+		token = TokenLBracket
+	case ']':
+		token = TokenRBracket
 	case 'f', 'n', 't':
 		token = TokenIdent
 	case '"':
@@ -76,12 +76,26 @@ func (l *lexer) nextToken() parsedToken {
 	}
 }
 
+// tokens enables the iter Pattern for consuming tokens.
+// can we read and parse concurrently with this? idk
 func (l *lexer) tokens() iter.Seq[parsedToken] {
+	fmt.Println("started yielding")
 	return func(yield func(parsedToken) bool) {
 		for {
 			if token := l.nextToken(); token == tokenEOF || !yield(token) {
 				return
 			}
+		}
+	}
+}
+
+// some function like Send that sends it to a provided channel, and another side receives it?
+func (l *lexer) sendTokens(c chan parsedToken) {
+	for {
+		t := l.nextToken()
+		c <- t
+		if t == tokenEOF {
+			return
 		}
 	}
 }

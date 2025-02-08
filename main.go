@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 )
@@ -19,10 +18,10 @@ func main() {
 		}
 	}`)
 	rd := strings.NewReader(string(inputString))
-	lexer := newLexer(rd)
 
+	parser := NewParser(rd)
+
+	data := make(map[string]any)
+	parser.Parse(data)
 	slog.SetLogLoggerLevel(slog.LevelDebug)
-	for token := range lexer.tokens() {
-		fmt.Println("yielded", token)
-	}
 }

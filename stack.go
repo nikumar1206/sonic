@@ -21,10 +21,17 @@ func (s *stack) push(i stackItem) {
 	s.data = append(s.data, i)
 }
 
-func (s *stack) pop() {
+func (s *stack) pop() stackItem {
+	lastItem := s.data[len(s.data)-1]
 	s.data = s.data[0 : len(s.data)-1]
+
+	return lastItem
 }
 
-func (s *stack) peak() stackItem {
-	return s.data[len(s.data)-1]
+func (s *stack) peak() *stackItem {
+	return &s.data[len(s.data)-1]
+}
+
+func (s *stack) len() int {
+	return len(s.data)
 }
