@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -30,9 +29,8 @@ const (
 	TokenDoubleQuote
 	TokenSingleQuote
 	// TokenIllegal is anything that doesn't belong in JSON.
-	TOKENILLEGAL
-
-	TOKENEOF
+	TokenIllegal
+	TokenEOF
 )
 
 // just initialize these at the beginning, even if the tokens may not be used
@@ -50,8 +48,8 @@ var (
 	tokenNull        = &tokenWOVal{t: TokenNull}
 	tokenDoubleQuote = &tokenWOVal{t: TokenDoubleQuote}
 	tokenSingleQuote = &tokenWOVal{t: TokenSingleQuote}
-	tokenILLEGAL     = &tokenWOVal{t: TOKENILLEGAL}
-	tokenEOF         = &tokenWOVal{t: TOKENEOF}
+	tokenILLEGAL     = &tokenWOVal{t: TokenIllegal}
+	tokenEOF         = &tokenWOVal{t: TokenEOF}
 )
 
 type parsedToken interface {
@@ -122,12 +120,12 @@ func (t tokenType) NewParsedToken() parsedToken {
 		return tokenFalseBool
 	case TokenTrueBool:
 		return tokenTrueBool
-	case TOKENILLEGAL:
+	case TokenIllegal:
 		return tokenILLEGAL
-	case TOKENEOF:
+	case TokenEOF:
 		return tokenEOF
 	default:
-		panic(errors.New("for strings numbers, use NewParsedTokenFromBytes"))
+		panic(ErrLol)
 	}
 }
 
@@ -157,9 +155,9 @@ func (t tokenType) String() string {
 		return "\""
 	case TokenSingleQuote:
 		return "'"
-	case TOKENILLEGAL:
+	case TokenIllegal:
 		return "ILLEGAL"
-	case TOKENEOF:
+	case TokenEOF:
 		return "EOF"
 	case TokenNull:
 		return "null"
@@ -167,3 +165,7 @@ func (t tokenType) String() string {
 		return fmt.Sprintf("UnknownToken(%d)", t)
 	}
 }
+
+// func (t tokenType) isOpener() bool {
+// 	return t == TokenLBrace || t == TokenLBracket
+// }

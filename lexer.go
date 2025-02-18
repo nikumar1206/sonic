@@ -22,11 +22,10 @@ func newLexer(rd io.Reader) *lexer {
 
 func (l *lexer) nextToken() parsedToken {
 	ch, err := l.reader.ReadByte()
-	fmt.Println("yielding new token")
 	if err != nil {
 		return tokenEOF
 	}
-	token := TOKENILLEGAL
+	token := TokenIllegal
 
 	for isWhiteSpace(ch) {
 		ch, err = l.reader.ReadByte()
@@ -82,7 +81,7 @@ func (l *lexer) tokens() iter.Seq[parsedToken] {
 	fmt.Println("started yielding")
 	return func(yield func(parsedToken) bool) {
 		for {
-			if token := l.nextToken(); token == tokenEOF || !yield(token) {
+			if token := l.nextToken(); !yield(token) {
 				return
 			}
 		}
@@ -148,7 +147,7 @@ func (l *lexer) getIdentTokenType() tokenType {
 	if val == "true" {
 		return TokenTrueBool
 	}
-	return TOKENILLEGAL
+	return TokenIllegal
 }
 
 func isAlpha(ch byte) bool {
@@ -156,7 +155,7 @@ func isAlpha(ch byte) bool {
 }
 
 func isNumeric(ch byte) bool {
-	return '0' <= ch && ch <= '9'
+	return ('0' <= ch && ch <= '9') || ch == 'e'
 }
 
 func isAlphaNumeric(ch byte) bool {
