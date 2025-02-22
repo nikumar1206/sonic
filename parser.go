@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"iter"
 	"strconv"
 )
 
@@ -26,82 +25,74 @@ func NewParser(rd io.Reader) *Parser {
 
 // Parse needs to be an iterable
 func (p *Parser) Parse() any {
-	next, stop := iter.Pull(p.lexer.tokens())
-	defer stop()
 	for {
-		parsedToken := getToken(next)
-		fmt.Println("recieved token", parsedToken.getType())
+		parsedToken := p.lexer.nextToken()
 		switch tokenType := parsedToken.getType(); tokenType {
 		case TokenEOF:
-			fmt.Println("at EOF")
 			if p.stack.len() != 1 {
 				panic("something is wrong")
 			}
-			val := p.stack.pop().value
+			val := p.stack.pop()
 
 			return val
 		case TokenLBracket:
 			// array
-			p.stack.push(stackItem{
-				kind: tokenType, value: []any{},
-			})
-			fmt.Println("instantiating a new array for u")
+			p.stack.push([]any{})
 		case TokenLBrace:
-			p.stack.push(stackItem{
-				kind: tokenType, value: map[string]any{},
-			})
+			p.stack.push(map[string]any{})
 
-			fmt.Println("instantiating new stack object")
 		case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
 			value, err := p.parseValue(parsedToken)
 			if err != nil {
 				panic(err)
 			}
 
-			p.pushVal(stackItem{kind: tokenType, value: value})
+			p.pushVal(value)
 		case TokenRBrace, TokenRBracket:
 			// is a closer token
-
 			if p.stack.len() < 1 {
-				fmt.Println("what was in the stack at the end")
-				p.stack.debug()
 				panic("bad json i think. u might have too many closers")
 			}
 			lastItem := p.stack.pop()
-			fmt.Println("we are popping", lastItem)
 			p.pushVal(lastItem)
 		}
 
 	}
 }
 
-func (p *Parser) pushVal(s stackItem) {
+func (p *Parser) pushVal(s any) {
 	if p.stack.len() == 0 {
 		p.stack.push(s)
 		return
 	}
 
-	lastItem := p.stack.peak()
-	fmt.Println("peakedvalue from stack", lastItem.value)
-	switch lastItemVal := lastItem.value.(type) {
+	lastItemPtr := p.stack.peak()
+	if lastItemPtr == nil {
+		panic("Unexpected nil stack peak")
+	}
+
+	// Get the actual value
+	lastItem := *lastItemPtr
+
+	switch lastItemVal := (lastItem).(type) {
 	case map[string]any:
 		if p.stack.getLastUndefinedKey() == nil {
-			key, valid := s.value.(string)
+			key, valid := s.(string)
 			if !valid {
-				fmt.Println("pre panic: value was ", s.kind, s.value)
 				panic("key should be a string")
 			}
 			lastItemVal[key] = nil
 			p.stack.setLastUndefinedKey(&key)
-			fmt.Println("added key ", key)
 		} else {
-			lastItemVal[*p.stack.getLastUndefinedKey()] = s.value
+			lastItemVal[*p.stack.getLastUndefinedKey()] = s
 			p.stack.setLastUndefinedKey(nil)
 		}
 	case []any:
-		lastItem.value = append(lastItemVal, s.value)
+		lastItemVal = append(lastItemVal, s)
+		*p.stack.peak() = lastItemVal
+
 	default: // Handle the case where the top of the stack is NOT a map or array.
-		panic("Invalid stack state. Expected map or array.")
+		panic("Invalid stack state. Expected map or array. received")
 	}
 }
 
@@ -123,7 +114,6 @@ func (p *Parser) parseValue(pt parsedToken) (any, error) {
 	case TokenNumber:
 		val, err := parseNumber(pt.getVal())
 		if err != nil {
-			fmt.Println(err)
 			panic("wow what a number")
 		}
 

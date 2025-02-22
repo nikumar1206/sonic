@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"log/slog"
-	"strings"
-)
-
 func main() {
 	// inputString := []byte(`{
 	// 	"key1": 123,
@@ -17,19 +11,19 @@ func main() {
 	// 		}
 	// 	}`)
 
-	inputString2 := []byte(`{
-		"key1" 1e23
-		"key2" "value2",
-		"key2.5" null,
-		"key3" ["foo", "bar", 3, null]
-		}`)
+	// inputString2 := []byte(`{
+	// 	"key1" 1e23
+	// 	"key2" "value2",
+	// 	"key2.5" null,
+	// 	"key3" ["foo", "bar", 3, null]
+	// 	}`)
 
-	rd := strings.NewReader(string(inputString2))
+	// rd := strings.NewReader(string(inputString2))
 
-	parser := NewParser(rd)
+	// parser := NewParser(rd)
 
-	data := parser.Parse()
+	// data := parser.Parse()
 
-	fmt.Println("data here", data)
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	// fmt.Println("data here", data)
+	// slog.SetLogLoggerLevel(slog.LevelDebug)
 }

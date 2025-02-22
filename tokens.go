@@ -48,7 +48,7 @@ var (
 	tokenNull        = &tokenWOVal{t: TokenNull}
 	tokenDoubleQuote = &tokenWOVal{t: TokenDoubleQuote}
 	tokenSingleQuote = &tokenWOVal{t: TokenSingleQuote}
-	tokenILLEGAL     = &tokenWOVal{t: TokenIllegal}
+	tokenIllegal     = &tokenWOVal{t: TokenIllegal}
 	tokenEOF         = &tokenWOVal{t: TokenEOF}
 )
 
@@ -98,30 +98,14 @@ func (twl *tokenWVal) String() string {
 // NewParsedToken returns a parsedToken from
 func (t tokenType) NewParsedToken() parsedToken {
 	switch t {
-	case TokenComma:
-		return tokenComma
-	case TokenLBracket:
-		return tokenLBracket
-	case TokenRBracket:
-		return tokenRBracket
-	case TokenColon:
-		return tokenColon
-	case TokenLBrace:
-		return tokenLBrace
-	case TokenRBrace:
-		return tokenRBrace
 	case TokenNull:
 		return tokenNull
-	case TokenDoubleQuote:
-		return tokenDoubleQuote
-	case TokenSingleQuote:
-		return tokenSingleQuote
 	case TokenFalseBool:
 		return tokenFalseBool
 	case TokenTrueBool:
 		return tokenTrueBool
 	case TokenIllegal:
-		return tokenILLEGAL
+		return tokenIllegal
 	case TokenEOF:
 		return tokenEOF
 	default:
@@ -142,9 +126,9 @@ func (t tokenType) String() string {
 	case TokenComma:
 		return "Comma"
 	case TokenLBracket:
-		return "("
+		return "["
 	case TokenRBracket:
-		return ")"
+		return "]"
 	case TokenLBrace:
 		return "{"
 	case TokenRBrace:

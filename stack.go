@@ -7,28 +7,24 @@ import (
 
 // stack methods are push, pop, peak
 
-type stackItem struct {
-	kind  tokenType
-	value any
-}
-
 type stack struct {
-	data              []stackItem
+	data              []any
 	lastUndefinedKeys []*string
 }
 
 func newStack() *stack {
 	return &stack{
-		data: []stackItem{},
+		data:              make([]any, 0, 3),
+		lastUndefinedKeys: make([]*string, 0, 3),
 	}
 }
 
-func (s *stack) push(i stackItem) {
+func (s *stack) push(i any) {
 	s.data = append(s.data, i)
 	s.lastUndefinedKeys = append(s.lastUndefinedKeys, nil)
 }
 
-func (s *stack) pop() stackItem {
+func (s *stack) pop() any {
 	lastItem := s.data[len(s.data)-1]
 	s.data = s.data[0 : len(s.data)-1]
 
@@ -37,7 +33,7 @@ func (s *stack) pop() stackItem {
 	return lastItem
 }
 
-func (s *stack) peak() *stackItem {
+func (s *stack) peak() *any {
 	return &s.data[len(s.data)-1]
 }
 
@@ -55,13 +51,12 @@ func (s *stack) setLastUndefinedKey(key *string) {
 
 func (s *stack) debug() {
 	if len(s.data) == 0 {
-		fmt.Println("stack is empty")
 		return
 	}
 	fmt.Println("Stack Debug:")
 	for i := len(s.data) - 1; i >= 0; i-- {
-		val := s.data[i].value
-		fmt.Printf("[%d] kind: %v, value: ", i, s.data[i].kind)
+		val := s.data[i]
+		fmt.Printf("[%d] value: %v", i, val)
 		switch v := val.(type) {
 		case string:
 			// Print the string as-is (without quotes)

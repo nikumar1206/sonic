@@ -2,8 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"fmt"
 	"io"
 	"iter"
 	"log/slog"
@@ -25,7 +23,6 @@ func (l *lexer) nextToken() parsedToken {
 	if err != nil {
 		return tokenEOF
 	}
-	token := TokenIllegal
 
 	for isWhiteSpace(ch) {
 		ch, err = l.reader.ReadByte()
@@ -36,49 +33,37 @@ func (l *lexer) nextToken() parsedToken {
 
 	switch ch {
 	case '{':
-		token = TokenLBrace
+		return tokenLBrace
 	case '}':
-		token = TokenRBrace
+		return tokenRBrace
 	case ':':
-		token = TokenColon
+		return tokenColon
 	case ',':
-		token = TokenComma
+		return tokenComma
 	case '[':
-		token = TokenLBracket
+		return tokenLBracket
 	case ']':
-		token = TokenRBracket
+		return tokenRBracket
 	case 'f', 'n', 't':
-		token = TokenIdent
-	case '"':
-		token = TokenDoubleQuote
-	case '\'':
-		token = TokenSingleQuote
-	default:
-		if isNumeric(ch) {
-			token = TokenNumber
-		}
-	}
-
-	switch token {
-	case TokenSingleQuote:
-		return TokenString.NewParsedTokenFromBytes(l.readSingleQuoteString())
-	case TokenDoubleQuote:
-		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
-	case TokenIdent:
 		l.reader.UnreadByte()
 		return l.getIdentTokenType().NewParsedToken()
-	case TokenNumber:
-		l.reader.UnreadByte()
-		return TokenNumber.NewParsedTokenFromBytes(l.readNumber())
+	case '"':
+		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
+	case '\'':
+		return TokenString.NewParsedTokenFromBytes(l.readSingleQuoteString())
 	default:
-		return token.NewParsedToken()
+		if isNumeric(ch) {
+			l.reader.UnreadByte()
+			return TokenNumber.NewParsedTokenFromBytes(l.readNumber())
+		} else {
+			return tokenIllegal
+		}
 	}
 }
 
 // tokens enables the iter Pattern for consuming tokens.
 // can we read and parse concurrently with this? idk
-func (l *lexer) tokens() iter.Seq[parsedToken] {
-	fmt.Println("started yielding")
+func (l *lexer) Tokens() iter.Seq[parsedToken] {
 	return func(yield func(parsedToken) bool) {
 		for {
 			if token := l.nextToken(); !yield(token) {
@@ -100,11 +85,11 @@ func (l *lexer) sendTokens(c chan parsedToken) {
 }
 
 func (l *lexer) readDoubleQuoteString() []byte {
-	return l.readValue(keepReadingDoubleQuoteString)
+	return l.readValue(keepReadingDoubleQuoteString, true, 256)
 }
 
 func (l *lexer) readSingleQuoteString() []byte {
-	return l.readValue(keepReadingSingleQuoteString)
+	return l.readValue(keepReadingSingleQuoteString, true, 256)
 }
 
 func keepReadingDoubleQuoteString(b byte) bool { return b != '"' }
@@ -112,13 +97,12 @@ func keepReadingIdent(b byte) bool             { return isAlpha(b) && !isWhiteSp
 func keepReadingSingleQuoteString(b byte) bool { return b != '\'' }
 
 func (l *lexer) readNumber() []byte {
-	return l.readValue(isNumeric)
+	return l.readValue(isNumeric, false, 8)
 }
 
 // readValue reads until EOF or continueFunc returns False
-func (l *lexer) readValue(continueFunc func(byte) bool) []byte {
-	var acc bytes.Buffer
-
+func (l *lexer) readValue(continueFunc func(byte) bool, hasCloser bool, bufCap int) []byte {
+	buf := make([]byte, 0, 12)
 	for {
 		ch, err := l.reader.ReadByte()
 		if err != nil {
@@ -127,16 +111,20 @@ func (l *lexer) readValue(continueFunc func(byte) bool) []byte {
 		}
 
 		if !continueFunc(ch) {
+			if !hasCloser {
+				l.reader.UnreadByte()
+			}
 			break
 		} else {
-			acc.WriteByte(ch)
+			buf = append(buf, ch)
 		}
 	}
-	return acc.Bytes()
+
+	return buf
 }
 
 func (l *lexer) getIdentTokenType() tokenType {
-	val := string(l.readValue(keepReadingIdent))
+	val := string(l.readValue(keepReadingIdent, false, 5))
 
 	if val == "null" {
 		return TokenNull
@@ -155,7 +143,7 @@ func isAlpha(ch byte) bool {
 }
 
 func isNumeric(ch byte) bool {
-	return ('0' <= ch && ch <= '9') || ch == 'e'
+	return ('0' <= ch && ch <= '9') || ch == 'e' || ch == '.' || ch == '-'
 }
 
 func isAlphaNumeric(ch byte) bool {
