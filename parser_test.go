@@ -148,12 +148,12 @@ func BenchmarkParsing(b *testing.B) {
 
 func BenchmarkSmallLoad(b *testing.B) {
 	b.ReportAllocs()
-	b.SetBytes(int64(len(EXAMPLEJSON)))
+	b.SetBytes(int64(len(FROMTEST)))
 	file, _ := os.Create("mem.pprof")
 	pprof.WriteHeapProfile(file)
 	b.ResetTimer()
 	for range b.N {
-		rd := strings.NewReader(EXAMPLEJSON)
+		rd := strings.NewReader(FROMTEST)
 		parser := NewParser(rd)
 		parser.Parse()
 	}
