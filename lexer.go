@@ -6,6 +6,7 @@ import (
 	"iter"
 	"log/slog"
 	"unicode"
+	"unsafe"
 )
 
 type lexer struct {
@@ -46,7 +47,9 @@ func (l *lexer) nextToken() parsedToken {
 		return tokenRBracket
 	case 'f', 'n', 't':
 		l.reader.UnreadByte()
-		return TokenIdent.NewParsedTokenFromString(string(l.readValue(keepReadingIdent, false, 5)))
+		v := l.readValue(keepReadingIdent, false, 5)
+		val := *(*string)(unsafe.Pointer(&v))
+		return TokenIdent.NewParsedTokenFromString(val)
 	case '"':
 		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
 	case '\'':
@@ -124,10 +127,10 @@ func (l *lexer) readValue(continueFunc func(byte) bool, hasCloser bool, bufCap i
 }
 
 func (l *lexer) NewParsedToken() parsedToken {
-	val := string(l.readValue(keepReadingIdent, false, 5))
+	v := l.readValue(keepReadingIdent, false, 5)
+	val := *(*string)(unsafe.Pointer(&v))
 
 	switch val {
-
 	case "null":
 		return tokenNull
 	case "false":

@@ -37,27 +37,24 @@ const (
 // will allow fewer allocations during json stream
 // maybe lazy init? but thats limited benefit for more complexity
 var (
-	tokenComma       = &tokenWOVal{t: TokenComma}
-	tokenLBracket    = &tokenWOVal{t: TokenLBracket}
-	tokenRBracket    = &tokenWOVal{t: TokenRBracket}
-	tokenColon       = &tokenWOVal{t: TokenColon}
-	tokenLBrace      = &tokenWOVal{t: TokenLBrace}
-	tokenRBrace      = &tokenWOVal{t: TokenRBrace}
-	tokenTrueBool    = &tokenWOVal{t: TokenTrueBool}
-	tokenFalseBool   = &tokenWOVal{t: TokenFalseBool}
-	tokenNull        = &tokenWOVal{t: TokenNull}
-	tokenDoubleQuote = &tokenWOVal{t: TokenDoubleQuote}
-	tokenSingleQuote = &tokenWOVal{t: TokenSingleQuote}
-	tokenIllegal     = &tokenWOVal{t: TokenIllegal}
-	tokenEOF         = &tokenWOVal{t: TokenEOF}
+	tokenComma     = &tokenWOVal{t: TokenComma}
+	tokenLBracket  = &tokenWOVal{t: TokenLBracket}
+	tokenRBracket  = &tokenWOVal{t: TokenRBracket}
+	tokenColon     = &tokenWOVal{t: TokenColon}
+	tokenLBrace    = &tokenWOVal{t: TokenLBrace}
+	tokenRBrace    = &tokenWOVal{t: TokenRBrace}
+	tokenTrueBool  = &tokenWOVal{t: TokenTrueBool}
+	tokenFalseBool = &tokenWOVal{t: TokenFalseBool}
+	tokenNull      = &tokenWOVal{t: TokenNull}
+	// tokenDoubleQuote = &tokenWOVal{t: TokenDoubleQuote}
+	// tokenSingleQuote = &tokenWOVal{t: TokenSingleQuote}
+	tokenIllegal = &tokenWOVal{t: TokenIllegal}
+	tokenEOF     = &tokenWOVal{t: TokenEOF}
 )
 
 type parsedToken interface {
 	getType() tokenType
 	getVal() []byte
-	String() string
-	// isOpener() bool
-	// isCloser() bool
 }
 
 // tokenWVal should be used only for numbers
@@ -79,10 +76,6 @@ func (twol *tokenWOVal) getType() tokenType {
 	return twol.t
 }
 
-func (twol *tokenWOVal) String() string {
-	return twol.t.String()
-}
-
 func (twl *tokenWVal) getType() tokenType {
 	return twl.t
 }
@@ -91,15 +84,15 @@ func (twl *tokenWVal) getVal() []byte {
 	return twl.v
 }
 
-func (twl *tokenWVal) String() string {
-	return fmt.Sprintf("%s (%s)", string(twl.v), twl.t)
-}
-
 func (t tokenType) NewParsedTokenFromBytes(d []byte) parsedToken {
 	return &tokenWVal{t: t, v: d}
 }
 
 func (t tokenType) NewParsedTokenFromString(val string) parsedToken {
+	if len(val) > 5 {
+		return tokenIllegal
+	}
+
 	switch val {
 
 	case "null":
@@ -147,7 +140,3 @@ func (t tokenType) String() string {
 		return fmt.Sprintf("UnknownToken(%d)", t)
 	}
 }
-
-// func (t tokenType) isOpener() bool {
-// 	return t == TokenLBrace || t == TokenLBracket
-// }

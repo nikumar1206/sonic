@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
+	"runtime/pprof"
 	"strings"
 	"testing"
 	// "github.com/google/go-cmp/cmp"
@@ -119,9 +121,36 @@ var EXAMPLEJSON = `{
 })
 `
 
+var FROMTEST = `
+{
+    "st": 1,
+    "sid": 486,
+    "tt": "active",
+    "gr": 0,
+    "uuid": "de305d54-75b4-431b-adb2-eb6b9e546014",
+    "ip": "127.0.0.1",
+    "ua": "user_agent",
+    "tz": -6,
+    "v": 1
+}
+`
+
 func BenchmarkParsing(b *testing.B) {
 	b.ReportAllocs()
 	b.SetBytes(int64(len(EXAMPLEJSON)))
+	b.ResetTimer()
+	for range b.N {
+		rd := strings.NewReader(EXAMPLEJSON)
+		parser := NewParser(rd)
+		parser.Parse()
+	}
+}
+
+func BenchmarkSmallLoad(b *testing.B) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(EXAMPLEJSON)))
+	file, _ := os.Create("mem.pprof")
+	pprof.WriteHeapProfile(file)
 	b.ResetTimer()
 	for range b.N {
 		rd := strings.NewReader(EXAMPLEJSON)

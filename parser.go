@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"unsafe"
 )
 
 // basically keep a stack
@@ -110,7 +111,8 @@ func getToken(next func() (parsedToken, bool)) parsedToken {
 func (p *Parser) parseValue(pt parsedToken) (any, error) {
 	switch pt.getType() {
 	case TokenString:
-		return string(pt.getVal()), nil
+		v := pt.getVal()
+		return *(*string)(unsafe.Pointer(&v)), nil
 	case TokenNumber:
 		val, err := parseNumber(pt.getVal())
 		if err != nil {
@@ -130,15 +132,6 @@ func (p *Parser) parseValue(pt parsedToken) (any, error) {
 	}
 }
 
-func parseNumber(b []byte) (v any, err error) {
-	if v, err = strconv.ParseInt(string(b), 10, 64); err == nil {
-		return
-	}
-
-	if v, err = strconv.ParseFloat(string(b), 64); err == nil {
-		return
-	}
-
-	// Not a valid number
-	return 0, ErrNaN
+func parseNumber(b []byte) (float64, error) {
+	return strconv.ParseFloat(*(*string)(unsafe.Pointer(&b)), 64)
 }
