@@ -95,26 +95,24 @@ func (twl *tokenWVal) String() string {
 	return fmt.Sprintf("%s (%s)", string(twl.v), twl.t)
 }
 
-// NewParsedToken returns a parsedToken from
-func (t tokenType) NewParsedToken() parsedToken {
-	switch t {
-	case TokenNull:
-		return tokenNull
-	case TokenFalseBool:
-		return tokenFalseBool
-	case TokenTrueBool:
-		return tokenTrueBool
-	case TokenIllegal:
-		return tokenIllegal
-	case TokenEOF:
-		return tokenEOF
-	default:
-		panic(ErrLol)
-	}
-}
-
 func (t tokenType) NewParsedTokenFromBytes(d []byte) parsedToken {
 	return &tokenWVal{t: t, v: d}
+}
+
+func (t tokenType) NewParsedTokenFromString(val string) parsedToken {
+	switch val {
+
+	case "null":
+		return tokenNull
+	case "false":
+		return tokenFalseBool
+
+	case "true":
+		return tokenTrueBool
+
+	default:
+		return tokenIllegal
+	}
 }
 
 func (t tokenType) String() string {

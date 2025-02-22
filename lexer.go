@@ -46,7 +46,7 @@ func (l *lexer) nextToken() parsedToken {
 		return tokenRBracket
 	case 'f', 'n', 't':
 		l.reader.UnreadByte()
-		return l.getIdentTokenType().NewParsedToken()
+		return TokenIdent.NewParsedTokenFromString(string(l.readValue(keepReadingIdent, false, 5)))
 	case '"':
 		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
 	case '\'':
@@ -123,19 +123,22 @@ func (l *lexer) readValue(continueFunc func(byte) bool, hasCloser bool, bufCap i
 	return buf
 }
 
-func (l *lexer) getIdentTokenType() tokenType {
+func (l *lexer) NewParsedToken() parsedToken {
 	val := string(l.readValue(keepReadingIdent, false, 5))
 
-	if val == "null" {
-		return TokenNull
+	switch val {
+
+	case "null":
+		return tokenNull
+	case "false":
+		return tokenFalseBool
+
+	case "true":
+		return tokenTrueBool
+
+	default:
+		return tokenIllegal
 	}
-	if val == "false" {
-		return TokenFalseBool
-	}
-	if val == "true" {
-		return TokenTrueBool
-	}
-	return TokenIllegal
 }
 
 func isAlpha(ch byte) bool {
