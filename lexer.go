@@ -9,6 +9,12 @@ import (
 	"unsafe"
 )
 
+var (
+	FALSE_BYTES = []byte{'f', 'a', 'l', 's', 'e'}
+	TRUE_BYTES  = []byte{'t', 'r', 'u', 'e'}
+	NULL_BYTES  = []byte{'n', 'u', 'l', 'l'}
+)
+
 type lexer struct {
 	reader *bufio.Reader
 }
@@ -45,11 +51,46 @@ func (l *lexer) nextToken() parsedToken {
 		return tokenLBracket
 	case ']':
 		return tokenRBracket
-	case 'f', 'n', 't':
-		l.reader.UnreadByte()
-		v := l.readValue(keepReadingIdent, false, 5)
-		val := *(*string)(unsafe.Pointer(&v))
-		return TokenIdent.NewParsedTokenFromString(val)
+	case 'f':
+		// assume can be 'false'
+		for _, b := range FALSE_BYTES[1:] {
+			rb, err := l.reader.ReadByte()
+			if err != nil {
+				return tokenEOF
+			}
+			if rb != b {
+				return tokenIllegal
+			}
+		}
+
+		return tokenFalseBool
+
+	case 't':
+		// assume can be 'true'
+		for _, b := range TRUE_BYTES[1:] {
+			rb, err := l.reader.ReadByte()
+			if err != nil {
+				return tokenEOF
+			}
+			if rb != b {
+				return tokenIllegal
+			}
+		}
+		return tokenTrueBool
+
+	case 'n':
+		// assume can be 'true'
+		for _, b := range NULL_BYTES[1:] {
+			rb, err := l.reader.ReadByte()
+			if err != nil {
+				return tokenEOF
+			}
+			if rb != b {
+				return tokenIllegal
+			}
+		}
+		return tokenNull
+
 	case '"':
 		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
 	case '\'':

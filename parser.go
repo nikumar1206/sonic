@@ -24,41 +24,36 @@ func NewParser(rd io.Reader) *Parser {
 	}
 }
 
-// Parse needs to be an iterable
-func (p *Parser) Parse() any {
-	for {
-		parsedToken := p.lexer.nextToken()
-		switch tokenType := parsedToken.getType(); tokenType {
-		case TokenEOF:
-			if p.stack.len() != 1 {
-				panic("something is wrong")
-			}
-			val := p.stack.pop()
-
-			return val
-		case TokenLBracket:
-			// array
-			p.stack.push([]any{})
-		case TokenLBrace:
-			p.stack.push(map[string]any{})
-
-		case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
-			value, err := p.parseValue(parsedToken)
-			if err != nil {
-				panic(err)
-			}
-
-			p.pushVal(value)
-		case TokenRBrace, TokenRBracket:
-			// is a closer token
-			if p.stack.len() < 1 {
-				panic("bad json i think. u might have too many closers")
-			}
-			lastItem := p.stack.pop()
-			p.pushVal(lastItem)
+func (p *Parser) ParseToken(parsedToken parsedToken) *any {
+	switch tokenType := parsedToken.getType(); tokenType {
+	case TokenEOF:
+		if p.stack.len() != 1 {
+			panic("something is wrong")
 		}
+		val := p.stack.pop()
+		return &val
 
+	case TokenLBracket:
+		// array
+		p.stack.push([]any{})
+	case TokenLBrace:
+		p.stack.push(map[string]any{})
+
+	case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
+		value, err := p.parseValue(parsedToken)
+		if err != nil {
+			panic(err)
+		}
+		p.pushVal(value)
+	case TokenRBrace, TokenRBracket:
+		// is a closer token
+		if p.stack.len() < 1 {
+			panic("bad json i think. u might have too many closers")
+		}
+		lastItem := p.stack.pop()
+		p.pushVal(lastItem)
 	}
+	return nil
 }
 
 func (p *Parser) pushVal(s any) {
@@ -114,8 +109,10 @@ func (p *Parser) parseValue(pt parsedToken) (any, error) {
 		v := pt.getVal()
 		return *(*string)(unsafe.Pointer(&v)), nil
 	case TokenNumber:
-		val, err := parseNumber(pt.getVal())
+		v := pt.getVal()
+		val, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&v)), 64)
 		if err != nil {
+			fmt.Println("what was pt", string(pt.getVal()))
 			panic("wow what a number")
 		}
 
@@ -132,6 +129,14 @@ func (p *Parser) parseValue(pt parsedToken) (any, error) {
 	}
 }
 
-func parseNumber(b []byte) (float64, error) {
-	return strconv.ParseFloat(*(*string)(unsafe.Pointer(&b)), 64)
+// Parse needs to be an iterable
+func (p *Parser) Parse() any {
+	for {
+		parsedToken := p.lexer.nextToken()
+		val := p.ParseToken(parsedToken)
+
+		if val != nil {
+			return *val
+		}
+	}
 }
