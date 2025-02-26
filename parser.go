@@ -92,17 +92,6 @@ func (p *Parser) pushVal(s any) {
 	}
 }
 
-// getToken just calls the next on manual iterator.
-// but who cares about the valid value??
-func getToken(next func() (parsedToken, bool)) parsedToken {
-	token, valid := next()
-
-	if !valid {
-		panic("invalid? should never happen")
-	}
-	return token
-}
-
 func (p *Parser) parseValue(pt parsedToken) (any, error) {
 	switch pt.getType() {
 	case TokenString:

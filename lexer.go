@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	FALSE_BYTES = []byte{'f', 'a', 'l', 's', 'e'}
-	TRUE_BYTES  = []byte{'t', 'r', 'u', 'e'}
-	NULL_BYTES  = []byte{'n', 'u', 'l', 'l'}
+	FALSE_BYTES = []byte{'a', 'l', 's', 'e'}
+	TRUE_BYTES  = []byte{'r', 'u', 'e'}
+	NULL_BYTES  = []byte{'u', 'l', 'l'}
 )
 
 type lexer struct {
@@ -52,7 +52,7 @@ func (l *lexer) nextToken() parsedToken {
 		return tokenRBracket
 	case 'f':
 		// assume can be 'false'
-		for _, b := range FALSE_BYTES[1:] {
+		for _, b := range FALSE_BYTES {
 			rb, err := l.reader.ReadByte()
 			if err != nil {
 				return tokenEOF
@@ -66,7 +66,7 @@ func (l *lexer) nextToken() parsedToken {
 
 	case 't':
 		// assume can be 'true'
-		for _, b := range TRUE_BYTES[1:] {
+		for _, b := range TRUE_BYTES {
 			rb, err := l.reader.ReadByte()
 			if err != nil {
 				return tokenEOF
@@ -79,7 +79,7 @@ func (l *lexer) nextToken() parsedToken {
 
 	case 'n':
 		// assume can be 'null'
-		for _, b := range NULL_BYTES[1:] {
+		for _, b := range NULL_BYTES {
 			rb, err := l.reader.ReadByte()
 			if err != nil {
 				return tokenEOF
