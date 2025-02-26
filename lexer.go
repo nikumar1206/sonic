@@ -6,7 +6,6 @@ import (
 	"iter"
 	"log/slog"
 	"unicode"
-	"unsafe"
 )
 
 var (
@@ -79,7 +78,7 @@ func (l *lexer) nextToken() parsedToken {
 		return tokenTrueBool
 
 	case 'n':
-		// assume can be 'true'
+		// assume can be 'null'
 		for _, b := range NULL_BYTES[1:] {
 			rb, err := l.reader.ReadByte()
 			if err != nil {
@@ -117,17 +116,6 @@ func (l *lexer) Tokens() iter.Seq[parsedToken] {
 	}
 }
 
-// some function like Send that sends it to a provided channel, and another side receives it?
-func (l *lexer) sendTokens(c chan parsedToken) {
-	for {
-		t := l.nextToken()
-		c <- t
-		if t == tokenEOF {
-			return
-		}
-	}
-}
-
 func (l *lexer) readDoubleQuoteString() []byte {
 	return l.readValue(keepReadingDoubleQuoteString, true, 256)
 }
@@ -137,7 +125,6 @@ func (l *lexer) readSingleQuoteString() []byte {
 }
 
 func keepReadingDoubleQuoteString(b byte) bool { return b != '"' }
-func keepReadingIdent(b byte) bool             { return isAlpha(b) && !isWhiteSpace(b) }
 func keepReadingSingleQuoteString(b byte) bool { return b != '\'' }
 
 func (l *lexer) readNumber() []byte {
@@ -163,26 +150,7 @@ func (l *lexer) readValue(continueFunc func(byte) bool, hasCloser bool, bufCap i
 			buf = append(buf, ch)
 		}
 	}
-
 	return buf
-}
-
-func (l *lexer) NewParsedToken() parsedToken {
-	v := l.readValue(keepReadingIdent, false, 5)
-	val := *(*string)(unsafe.Pointer(&v))
-
-	switch val {
-	case "null":
-		return tokenNull
-	case "false":
-		return tokenFalseBool
-
-	case "true":
-		return tokenTrueBool
-
-	default:
-		return tokenIllegal
-	}
 }
 
 func isAlpha(ch byte) bool {
