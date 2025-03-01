@@ -84,8 +84,9 @@ func TestParsing(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rd := strings.NewReader(tt.input)
 
-			parser := NewParser(rd)
+			parser := NewParser(rd, "stack")
 			actual := parser.Parse()
+
 			actual = ConvertIntsToFloat64(actual)
 
 			expected := make(map[string]any)
@@ -141,7 +142,7 @@ func BenchmarkParsing(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		rd := strings.NewReader(EXAMPLEJSON)
-		parser := NewParser(rd)
+		parser := NewParser(rd, "stack")
 		parser.Parse()
 	}
 }
@@ -152,7 +153,7 @@ func BenchmarkSmallLoad(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		rd := strings.NewReader(FROMTEST)
-		parser := NewParser(rd)
+		parser := NewParser(rd, "stack")
 		parser.Parse()
 	}
 }
@@ -259,7 +260,7 @@ func BenchmarkMediumPayload(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		rd := strings.NewReader(mediumFixture)
-		parser := NewParser(rd)
+		parser := NewParser(rd, "stack")
 		parser.Parse()
 	}
 }

@@ -9,6 +9,7 @@ jsonic but actually called sonic, cuz its supposed to be fast
 - Marshal/Unmarshal from/to structs
 
 - should we allow like " and ' to close one another?
+- duplicate keys
 
 ### Benchmarks
 

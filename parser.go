@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"strconv"
 	"unsafe"
 )
@@ -12,19 +14,37 @@ import (
 // stack item is popped everytime we encounter a closing bracket or a closing ], depending on stack opener
 // stack item is added when we encounter an opening bracket or opening [
 
-type Parser struct {
+type Parser interface {
+	ParseToken(parsedToken) *any
+	Parse() any
+}
+type StackParser struct {
 	lexer *lexer
 	stack *stack
 }
 
-func NewParser(rd io.Reader) *Parser {
-	return &Parser{
-		lexer: newLexer(rd),
-		stack: newStack(),
+type RecursiveParser struct {
+	lexer *lexer
+}
+
+func NewParser(rd io.Reader, _type string) Parser {
+	switch _type {
+	case "stack":
+		return &StackParser{
+			lexer: newLexer(rd),
+			stack: newStack(),
+		}
+	case "recursive":
+		return &RecursiveParser{
+			lexer: newLexer(rd),
+		}
+	default:
+		panic("either recursive or stack parsing")
+
 	}
 }
 
-func (p *Parser) ParseToken(parsedToken parsedToken) *any {
+func (p *StackParser) ParseToken(parsedToken parsedToken) *any {
 	switch tokenType := parsedToken.getType(); tokenType {
 	case TokenEOF:
 		if p.stack.len() != 1 {
@@ -40,7 +60,7 @@ func (p *Parser) ParseToken(parsedToken parsedToken) *any {
 		p.stack.push(map[string]any{})
 
 	case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
-		value, err := p.parseValue(parsedToken)
+		value, err := parseValue(parsedToken)
 		if err != nil {
 			panic(err)
 		}
@@ -56,7 +76,7 @@ func (p *Parser) ParseToken(parsedToken parsedToken) *any {
 	return nil
 }
 
-func (p *Parser) pushVal(s any) {
+func (p *StackParser) pushVal(s any) {
 	if p.stack.len() == 0 {
 		p.stack.push(s)
 		return
@@ -92,14 +112,14 @@ func (p *Parser) pushVal(s any) {
 	}
 }
 
-func (p *Parser) parseValue(pt parsedToken) (any, error) {
+func parseValue(pt parsedToken) (any, error) {
 	switch pt.getType() {
 	case TokenString:
 		v := pt.getVal()
-		return *(*string)(unsafe.Pointer(&v)), nil
+		return bytesToString(v), nil
 	case TokenNumber:
 		v := pt.getVal()
-		val, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&v)), 64)
+		val, err := strconv.ParseFloat(bytesToString(v), 64)
 		if err != nil {
 			fmt.Println("what was pt", string(pt.getVal()))
 			panic("wow what a number")
@@ -118,8 +138,7 @@ func (p *Parser) parseValue(pt parsedToken) (any, error) {
 	}
 }
 
-// Parse needs to be an iterable
-func (p *Parser) Parse() any {
+func (p *StackParser) Parse() any {
 	for {
 		parsedToken := p.lexer.nextToken()
 		val := p.ParseToken(parsedToken)
@@ -128,4 +147,120 @@ func (p *Parser) Parse() any {
 			return *val
 		}
 	}
+}
+
+// logic completely incorrect here lol
+func (p *RecursiveParser) Parse() any {
+	ending_val := make(map[string]any)
+	for {
+		parsedToken := p.lexer.nextToken()
+		if parsedToken == tokenEOF {
+			break
+		}
+
+		val := p.ParseToken(parsedToken)
+
+		switch v := (*val).(type) {
+		case map[string]any:
+			maps.Copy(ending_val, v)
+		case string:
+			ending_val["string_value"] = v
+		case float64:
+			ending_val["number_value"] = v
+		case bool:
+			ending_val["bool_value"] = v
+		case []any:
+			ending_val["array_value"] = v
+		default:
+			fmt.Println("hit default")
+		}
+	}
+	var result any = ending_val
+	return &result
+}
+
+func (p *RecursiveParser) ParseToken(parsedToken parsedToken) *any {
+	var val any = nil
+	var err error
+	switch tokenType := parsedToken.getType(); tokenType {
+	case TokenLBracket:
+		val, err = p.parseArray()
+		if err != nil {
+			panic(val)
+		}
+	case TokenLBrace:
+		val, err = p.parseObject()
+		if err != nil {
+			panic(err)
+		}
+	case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
+		val, err = parseValue(parsedToken)
+		if err != nil {
+			panic(err)
+		}
+
+	}
+	return &val
+}
+
+func (p *RecursiveParser) parseObject() (map[string]any, error) {
+	obj := make(map[string]any)
+
+	t := p.lexer.nextToken()
+
+	for {
+		switch tokenType := parsedToken.getType(t); tokenType {
+		case TokenRBrace:
+			p.lexer.nextToken()
+			return obj, nil
+		case TokenString:
+			p.lexer.nextToken() // likely comma?
+
+			value, err := parseValue(p.lexer.nextToken())
+			if err != nil {
+				return nil, err
+			}
+			obj[bytesToString(t.getVal())] = value
+
+			switch tokenType := parsedToken.getType(t); tokenType {
+			case TokenComma:
+				p.lexer.nextToken()
+			case TokenRBrace:
+				continue
+			default:
+				return nil, errors.New("expected comma or closing brace")
+			}
+		default:
+			return nil, errors.New("expected string key or closing brace")
+		}
+	}
+}
+
+func (p *RecursiveParser) parseArray() ([]any, error) {
+	var arr []any
+	t := p.lexer.nextToken()
+
+	for {
+		switch tokenType := parsedToken.getType(t); tokenType {
+		case TokenRBracket:
+			p.lexer.nextToken()
+			return arr, nil
+		default:
+			value := p.ParseToken(t)
+			arr = append(arr, value)
+
+			switch tokenType := parsedToken.getType(t); tokenType {
+			case TokenComma:
+				p.lexer.nextToken()
+			case TokenRBracket:
+				continue
+			default:
+				return nil, errors.New("expected comma or closing bracket")
+			}
+		}
+	}
+}
+
+func bytesToString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
