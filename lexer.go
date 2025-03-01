@@ -91,9 +91,12 @@ func (l *lexer) nextToken() parsedToken {
 		return tokenNull
 
 	case '"':
-		return TokenString.NewParsedTokenFromBytes(l.readDoubleQuoteString())
+		b, _ := l.reader.ReadBytes('"')
+		return TokenString.NewParsedTokenFromBytes(b[:len(b)-1])
 	case '\'':
-		return TokenString.NewParsedTokenFromBytes(l.readSingleQuoteString())
+		b, _ := l.reader.ReadBytes('\'')
+
+		return TokenString.NewParsedTokenFromBytes(b[:len(b)-1])
 	default:
 		if isNumeric(ch) {
 			l.reader.UnreadByte()
