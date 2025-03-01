@@ -95,7 +95,6 @@ func (l *lexer) nextToken() parsedToken {
 		return TokenString.NewParsedTokenFromBytes(b[:len(b)-1])
 	case '\'':
 		b, _ := l.reader.ReadBytes('\'')
-
 		return TokenString.NewParsedTokenFromBytes(b[:len(b)-1])
 	default:
 		if isNumeric(ch) {

@@ -1,0 +1,10 @@
+goos: darwin
+goarch: arm64
+pkg: sonic
+cpu: Apple M3
+BenchmarkParsing-8         	  362512	      3249 ns/op	  81.87 MB/s	    6624 B/op	      86 allocs/op
+BenchmarkSmallLoad-8       	  413431	      2784 ns/op	  68.61 MB/s	    6321 B/op	      74 allocs/op
+BenchmarkMediumPayload-8   	   59757	     19922 ns/op	 116.85 MB/s	   20081 B/op	     481 allocs/op
+BenchmarkStdLib-8          	   78850	     15342 ns/op	 151.74 MB/s	   13042 B/op	     208 allocs/op
+PASS
+ok  	sonic	6.240s

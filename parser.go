@@ -116,10 +116,10 @@ func parseValue(pt parsedToken) (any, error) {
 	switch pt.getType() {
 	case TokenString:
 		v := pt.getVal()
-		return bytesToString(v), nil
+		return v, nil
 	case TokenNumber:
 		v := pt.getVal()
-		val, err := strconv.ParseFloat(bytesToString(v), 64)
+		val, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			fmt.Println("what was pt", string(pt.getVal()))
 			panic("wow what a number")
@@ -220,7 +220,7 @@ func (p *RecursiveParser) parseObject() (map[string]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			obj[bytesToString(t.getVal())] = value
+			obj[t.getVal()] = value
 
 			switch tokenType := parsedToken.getType(t); tokenType {
 			case TokenComma:

@@ -37,55 +37,37 @@ const (
 // will allow fewer allocations during json stream
 // maybe lazy init? but thats limited benefit for more complexity
 var (
-	tokenComma     = &tokenWOVal{t: TokenComma}
-	tokenLBracket  = &tokenWOVal{t: TokenLBracket}
-	tokenRBracket  = &tokenWOVal{t: TokenRBracket}
-	tokenColon     = &tokenWOVal{t: TokenColon}
-	tokenLBrace    = &tokenWOVal{t: TokenLBrace}
-	tokenRBrace    = &tokenWOVal{t: TokenRBrace}
-	tokenTrueBool  = &tokenWOVal{t: TokenTrueBool}
-	tokenFalseBool = &tokenWOVal{t: TokenFalseBool}
-	tokenNull      = &tokenWOVal{t: TokenNull}
-	// tokenDoubleQuote = &tokenWOVal{t: TokenDoubleQuote}
-	// tokenSingleQuote = &tokenWOVal{t: TokenSingleQuote}
-	tokenIllegal = &tokenWOVal{t: TokenIllegal}
-	tokenEOF     = &tokenWOVal{t: TokenEOF}
+	tokenComma     = parsedToken{t: TokenComma}
+	tokenLBracket  = parsedToken{t: TokenLBracket}
+	tokenRBracket  = parsedToken{t: TokenRBracket}
+	tokenColon     = parsedToken{t: TokenColon}
+	tokenLBrace    = parsedToken{t: TokenLBrace}
+	tokenRBrace    = parsedToken{t: TokenRBrace}
+	tokenTrueBool  = parsedToken{t: TokenTrueBool}
+	tokenFalseBool = parsedToken{t: TokenFalseBool}
+	tokenNull      = parsedToken{t: TokenNull}
+	// tokenDoubleQuote = &parsedToken{t: TokenDoubleQuote}
+	// tokenSingleQuote = &parsedToken{t: TokenSingleQuote}
+	tokenIllegal = parsedToken{t: TokenIllegal}
+	tokenEOF     = parsedToken{t: TokenEOF}
 )
 
-type parsedToken interface {
-	getType() tokenType
-	getVal() []byte
-}
-
 // tokenWVal should be used only for numbers
-type tokenWVal struct {
+type parsedToken struct {
 	t tokenType
-	v []byte
+	v string
 }
 
-// tokenWOVal should be used for all other tokens
-type tokenWOVal struct {
-	t tokenType
-}
-
-func (twol *tokenWOVal) getVal() []byte {
-	return nil
-}
-
-func (twol *tokenWOVal) getType() tokenType {
-	return twol.t
-}
-
-func (twl *tokenWVal) getType() tokenType {
+func (twl parsedToken) getType() tokenType {
 	return twl.t
 }
 
-func (twl *tokenWVal) getVal() []byte {
+func (twl parsedToken) getVal() string {
 	return twl.v
 }
 
 func (t tokenType) NewParsedTokenFromBytes(d []byte) parsedToken {
-	return &tokenWVal{t: t, v: d}
+	return parsedToken{t: t, v: bytesToString(d)}
 }
 
 func (t tokenType) NewParsedTokenFromString(val string) parsedToken {
