@@ -15,16 +15,16 @@ import (
 // stack item is added when we encounter an opening bracket or opening [
 
 type Parser interface {
-	ParseToken(Token) *any
+	ParseToken(Token) any
 	Parse() any
 }
 type StackParser struct {
-	lexer *lexer
-	stack *stack
+	lexer lexer
+	stack stack
 }
 
 type RecursiveParser struct {
-	lexer *lexer
+	lexer lexer
 }
 
 func NewParser(rd io.Reader, _type string) Parser {
@@ -44,14 +44,14 @@ func NewParser(rd io.Reader, _type string) Parser {
 	}
 }
 
-func (p *StackParser) ParseToken(t Token) *any {
+func (p *StackParser) ParseToken(t Token) any {
 	switch t._type {
 	case TokenEOF:
 		if p.stack.len() != 1 {
 			panic("something is wrong")
 		}
 		val := p.stack.pop()
-		return &val
+		return val
 
 	case TokenLBracket:
 		// array
@@ -82,13 +82,10 @@ func (p *StackParser) pushVal(s any) {
 		return
 	}
 
-	lastItemPtr := p.stack.peak()
-	if lastItemPtr == nil {
+	lastItem := p.stack.peak()
+	if lastItem == nil {
 		panic("Unexpected nil stack peak")
 	}
-
-	// Get the actual value
-	lastItem := *lastItemPtr
 
 	switch lastItemVal := (lastItem).(type) {
 	case map[string]any:
@@ -104,8 +101,7 @@ func (p *StackParser) pushVal(s any) {
 			p.stack.setLastUndefinedKey(nil)
 		}
 	case []any:
-		lastItemVal = append(lastItemVal, s)
-		*p.stack.peak() = lastItemVal
+		p.stack.data[len(p.stack.data)-1] = append(lastItemVal, s)
 
 	default: // Handle the case where the top of the stack is NOT a map or array.
 		panic("Invalid stack state. Expected map or array. received")
@@ -144,7 +140,7 @@ func (p *StackParser) Parse() any {
 		val := p.ParseToken(t)
 
 		if val != nil {
-			return *val
+			return val
 		}
 	}
 }
@@ -160,7 +156,7 @@ func (p *RecursiveParser) Parse() any {
 
 		val := p.ParseToken(t)
 
-		switch v := (*val).(type) {
+		switch v := (val).(type) {
 		case map[string]any:
 			maps.Copy(ending_val, v)
 		case string:
@@ -179,7 +175,7 @@ func (p *RecursiveParser) Parse() any {
 	return &result
 }
 
-func (p *RecursiveParser) ParseToken(t Token) *any {
+func (p *RecursiveParser) ParseToken(t Token) any {
 	var val any = nil
 	var err error
 	switch t._type {

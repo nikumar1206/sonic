@@ -255,7 +255,11 @@ var mediumFixture = `{
 func BenchmarkMediumPayload(b *testing.B) {
 	b.ReportAllocs()
 	file, _ := os.Create("mem.pprof")
-	pprof.WriteHeapProfile(file)
+	err := pprof.WriteHeapProfile(file)
+	if err != nil {
+		panic(err)
+	}
+
 	b.SetBytes(int64(len(mediumFixture)))
 	b.ResetTimer()
 	for range b.N {

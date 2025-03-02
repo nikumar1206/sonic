@@ -18,8 +18,8 @@ type lexer struct {
 	reader *bufio.Reader
 }
 
-func newLexer(rd io.Reader) *lexer {
-	return &lexer{
+func newLexer(rd io.Reader) lexer {
+	return lexer{
 		reader: bufio.NewReader(rd),
 	}
 }

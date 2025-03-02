@@ -8,3 +8,10 @@ BenchmarkMediumPayload-8   	   59757	     19922 ns/op	 116.85 MB/s	   20081 B/op
 BenchmarkStdLib-8          	   78850	     15342 ns/op	 151.74 MB/s	   13042 B/op	     208 allocs/op
 PASS
 ok  	sonic	6.240s
+
+
+# pre-jsonvalue interface
+BenchmarkParsing-14               607466              2012 ns/op         132.22 MB/s        6408 B/op         68 allocs/op
+BenchmarkSmallLoad-14             648528              1690 ns/op         112.99 MB/s        6144 B/op         58 allocs/op
+BenchmarkMediumPayload-14         104337             11277 ns/op         206.43 MB/s       17240 B/op        364 allocs/op
+BenchmarkStdLib-14                111508             10646 ns/op         218.68 MB/s       13008 B/op        213 allocs/op

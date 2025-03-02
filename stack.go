@@ -12,8 +12,8 @@ type stack struct {
 	lastUndefinedKeys []*string
 }
 
-func newStack() *stack {
-	return &stack{
+func newStack() stack {
+	return stack{
 		data:              make([]any, 0, 3),
 		lastUndefinedKeys: make([]*string, 0, 3),
 	}
@@ -29,12 +29,11 @@ func (s *stack) pop() any {
 	s.data = s.data[0 : len(s.data)-1]
 
 	s.lastUndefinedKeys = s.lastUndefinedKeys[0 : len(s.lastUndefinedKeys)-1]
-
 	return lastItem
 }
 
-func (s *stack) peak() *any {
-	return &s.data[len(s.data)-1]
+func (s *stack) peak() any {
+	return s.data[len(s.data)-1]
 }
 
 func (s *stack) len() int {
