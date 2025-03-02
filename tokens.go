@@ -37,40 +37,30 @@ const (
 // will allow fewer allocations during json stream
 // maybe lazy init? but thats limited benefit for more complexity
 var (
-	tokenComma     = parsedToken{t: TokenComma}
-	tokenLBracket  = parsedToken{t: TokenLBracket}
-	tokenRBracket  = parsedToken{t: TokenRBracket}
-	tokenColon     = parsedToken{t: TokenColon}
-	tokenLBrace    = parsedToken{t: TokenLBrace}
-	tokenRBrace    = parsedToken{t: TokenRBrace}
-	tokenTrueBool  = parsedToken{t: TokenTrueBool}
-	tokenFalseBool = parsedToken{t: TokenFalseBool}
-	tokenNull      = parsedToken{t: TokenNull}
-	// tokenDoubleQuote = &parsedToken{t: TokenDoubleQuote}
-	// tokenSingleQuote = &parsedToken{t: TokenSingleQuote}
-	tokenIllegal = parsedToken{t: TokenIllegal}
-	tokenEOF     = parsedToken{t: TokenEOF}
+	tokenComma     = Token{_type: TokenComma}
+	tokenLBracket  = Token{_type: TokenLBracket}
+	tokenRBracket  = Token{_type: TokenRBracket}
+	tokenColon     = Token{_type: TokenColon}
+	tokenLBrace    = Token{_type: TokenLBrace}
+	tokenRBrace    = Token{_type: TokenRBrace}
+	tokenTrueBool  = Token{_type: TokenTrueBool}
+	tokenFalseBool = Token{_type: TokenFalseBool}
+	tokenNull      = Token{_type: TokenNull}
+	tokenIllegal   = Token{_type: TokenIllegal}
+	tokenEOF       = Token{_type: TokenEOF}
 )
 
 // tokenWVal should be used only for numbers
-type parsedToken struct {
-	t tokenType
-	v string
+type Token struct {
+	_type tokenType
+	value string
 }
 
-func (twl parsedToken) getType() tokenType {
-	return twl.t
+func (t tokenType) NewTokenFromBytes(d []byte) Token {
+	return Token{_type: t, value: bytesToString(d)}
 }
 
-func (twl parsedToken) getVal() string {
-	return twl.v
-}
-
-func (t tokenType) NewParsedTokenFromBytes(d []byte) parsedToken {
-	return parsedToken{t: t, v: bytesToString(d)}
-}
-
-func (t tokenType) NewParsedTokenFromString(val string) parsedToken {
+func (t tokenType) NewTokenFromString(val string) Token {
 	if len(val) > 5 {
 		return tokenIllegal
 	}

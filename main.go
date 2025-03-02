@@ -19,7 +19,7 @@ func main() {
 
 	rd := strings.NewReader(string(inputString))
 
-	parser := NewParser(rd, "recursive")
+	parser := NewParser(rd, "stack")
 
 	data := parser.Parse()
 

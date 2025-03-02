@@ -24,7 +24,7 @@ func newLexer(rd io.Reader) *lexer {
 	}
 }
 
-func (l *lexer) nextToken() parsedToken {
+func (l *lexer) nextToken() Token {
 	ch, err := l.reader.ReadByte()
 	if err != nil {
 		return tokenEOF
@@ -92,14 +92,14 @@ func (l *lexer) nextToken() parsedToken {
 
 	case '"':
 		b, _ := l.reader.ReadBytes('"')
-		return TokenString.NewParsedTokenFromBytes(b[:len(b)-1])
+		return TokenString.NewTokenFromBytes(b[:len(b)-1])
 	case '\'':
 		b, _ := l.reader.ReadBytes('\'')
-		return TokenString.NewParsedTokenFromBytes(b[:len(b)-1])
+		return TokenString.NewTokenFromBytes(b[:len(b)-1])
 	default:
 		if isNumeric(ch) {
 			l.reader.UnreadByte()
-			return TokenNumber.NewParsedTokenFromBytes(l.readNumber())
+			return TokenNumber.NewTokenFromBytes(l.readNumber())
 		} else {
 			return tokenIllegal
 		}
@@ -108,8 +108,8 @@ func (l *lexer) nextToken() parsedToken {
 
 // tokens enables the iter Pattern for consuming tokens.
 // can we read and parse concurrently with this? idk
-func (l *lexer) Tokens() iter.Seq[parsedToken] {
-	return func(yield func(parsedToken) bool) {
+func (l *lexer) Tokens() iter.Seq[Token] {
+	return func(yield func(Token) bool) {
 		for {
 			if token := l.nextToken(); !yield(token) {
 				return

@@ -15,7 +15,7 @@ import (
 // stack item is added when we encounter an opening bracket or opening [
 
 type Parser interface {
-	ParseToken(parsedToken) *any
+	ParseToken(Token) *any
 	Parse() any
 }
 type StackParser struct {
@@ -44,8 +44,8 @@ func NewParser(rd io.Reader, _type string) Parser {
 	}
 }
 
-func (p *StackParser) ParseToken(parsedToken parsedToken) *any {
-	switch tokenType := parsedToken.getType(); tokenType {
+func (p *StackParser) ParseToken(t Token) *any {
+	switch t._type {
 	case TokenEOF:
 		if p.stack.len() != 1 {
 			panic("something is wrong")
@@ -60,7 +60,7 @@ func (p *StackParser) ParseToken(parsedToken parsedToken) *any {
 		p.stack.push(map[string]any{})
 
 	case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
-		value, err := parseValue(parsedToken)
+		value, err := parseValue(t)
 		if err != nil {
 			panic(err)
 		}
@@ -112,16 +112,16 @@ func (p *StackParser) pushVal(s any) {
 	}
 }
 
-func parseValue(pt parsedToken) (any, error) {
-	switch pt.getType() {
+func parseValue(pt Token) (any, error) {
+	switch pt._type {
 	case TokenString:
-		v := pt.getVal()
+		v := pt.value
 		return v, nil
 	case TokenNumber:
-		v := pt.getVal()
+		v := pt.value
 		val, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			fmt.Println("what was pt", string(pt.getVal()))
+			fmt.Println("what was pt", string(pt.value))
 			panic("wow what a number")
 		}
 
@@ -134,14 +134,14 @@ func parseValue(pt parsedToken) (any, error) {
 	case TokenNull:
 		return nil, nil
 	default:
-		return nil, fmt.Errorf("unexpected token: %s", pt.getVal())
+		return nil, fmt.Errorf("unexpected token: %s", pt.value)
 	}
 }
 
 func (p *StackParser) Parse() any {
 	for {
-		parsedToken := p.lexer.nextToken()
-		val := p.ParseToken(parsedToken)
+		t := p.lexer.nextToken()
+		val := p.ParseToken(t)
 
 		if val != nil {
 			return *val
@@ -153,12 +153,12 @@ func (p *StackParser) Parse() any {
 func (p *RecursiveParser) Parse() any {
 	ending_val := make(map[string]any)
 	for {
-		parsedToken := p.lexer.nextToken()
-		if parsedToken == tokenEOF {
+		t := p.lexer.nextToken()
+		if t == tokenEOF {
 			break
 		}
 
-		val := p.ParseToken(parsedToken)
+		val := p.ParseToken(t)
 
 		switch v := (*val).(type) {
 		case map[string]any:
@@ -179,10 +179,10 @@ func (p *RecursiveParser) Parse() any {
 	return &result
 }
 
-func (p *RecursiveParser) ParseToken(parsedToken parsedToken) *any {
+func (p *RecursiveParser) ParseToken(t Token) *any {
 	var val any = nil
 	var err error
-	switch tokenType := parsedToken.getType(); tokenType {
+	switch t._type {
 	case TokenLBracket:
 		val, err = p.parseArray()
 		if err != nil {
@@ -194,7 +194,7 @@ func (p *RecursiveParser) ParseToken(parsedToken parsedToken) *any {
 			panic(err)
 		}
 	case TokenString, TokenNumber, TokenFalseBool, TokenTrueBool, TokenNull:
-		val, err = parseValue(parsedToken)
+		val, err = parseValue(t)
 		if err != nil {
 			panic(err)
 		}
@@ -209,7 +209,7 @@ func (p *RecursiveParser) parseObject() (map[string]any, error) {
 	t := p.lexer.nextToken()
 
 	for {
-		switch tokenType := parsedToken.getType(t); tokenType {
+		switch t._type {
 		case TokenRBrace:
 			p.lexer.nextToken()
 			return obj, nil
@@ -220,9 +220,9 @@ func (p *RecursiveParser) parseObject() (map[string]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			obj[t.getVal()] = value
+			obj[t.value] = value
 
-			switch tokenType := parsedToken.getType(t); tokenType {
+			switch t._type {
 			case TokenComma:
 				p.lexer.nextToken()
 			case TokenRBrace:
@@ -241,7 +241,7 @@ func (p *RecursiveParser) parseArray() ([]any, error) {
 	t := p.lexer.nextToken()
 
 	for {
-		switch tokenType := parsedToken.getType(t); tokenType {
+		switch t._type {
 		case TokenRBracket:
 			p.lexer.nextToken()
 			return arr, nil
@@ -249,7 +249,7 @@ func (p *RecursiveParser) parseArray() ([]any, error) {
 			value := p.ParseToken(t)
 			arr = append(arr, value)
 
-			switch tokenType := parsedToken.getType(t); tokenType {
+			switch t._type {
 			case TokenComma:
 				p.lexer.nextToken()
 			case TokenRBracket:
