@@ -111,18 +111,13 @@ func (p *StackParser) pushVal(s any) {
 func parseValue(pt Token) (any, error) {
 	switch pt._type {
 	case TokenString:
-		v := pt.value
-		return v, nil
+		return pt.value, nil
 	case TokenNumber:
-		v := pt.value
-		val, err := strconv.ParseFloat(v, 64)
+		val, err := strconv.ParseFloat(pt.value, 64)
 		if err != nil {
-			fmt.Println("what was pt", string(pt.value))
-			panic("wow what a number")
+			return nil, ErrNaN
 		}
-
 		return val, nil
-
 	case TokenTrueBool:
 		return true, nil
 	case TokenFalseBool:
@@ -130,7 +125,7 @@ func parseValue(pt Token) (any, error) {
 	case TokenNull:
 		return nil, nil
 	default:
-		return nil, fmt.Errorf("unexpected token: %s", pt.value)
+		return nil, nil
 	}
 }
 
